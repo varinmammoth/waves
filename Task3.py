@@ -135,6 +135,8 @@ for i in range(1,6):
     plt.show()
 
 #%%
+import copy
+
 def Dtf_error(w, r, y, dr, tin, tout):
     dT=0.000001
     dy = np.sqrt((dT/tout)**2 + (dT*tin/(tout**2))**2)
@@ -156,6 +158,7 @@ D_tf_all = []
 D_tf_all_err = []
 trans_all = []
 pl_all = [] 
+pl_bessel = []
 
 titles = ['thermal_1min_a.txt',\
 'thermal_2min_a.txt',\
@@ -207,11 +210,12 @@ for i in range(0,len(titles)):
     #we know the even terms are non-physical and due to random noise
     #so keep only odd terms
     delta_phi = delta_phi[1::2]
+    pl_bessel.append(copy.deepcopy(delta_phi))
     transmission = transmission[1::2]
     for i in range(0,len(delta_phi)):
         if i == 0:
-            while delta_phi[i] < 0:
-                delta_phi[i] += 2*np.pi
+            while delta_phi[0] < 0:
+                delta_phi[0] += 2*np.pi
         else:
             while delta_phi[i] < delta_phi[i-1]:
                 delta_phi[i] += np.pi*2
@@ -243,7 +247,17 @@ for i in range(0,len(titles)):
     # plt.ylabel('D ' + r'$(m^{2} s^{-1})$')
     # plt.show()
 
+#convert the negative values of phase lag into positive version by adding 2pi
+pl_bessel_new = [[ 0.85964952, -1.34916564, -1.44391956, -1.53949127],\
+    [ 1.70607304, -1.15743393, -1.31975787, -1.29878016],\
+    [ 3.11924273,  0.50867012, -1.2387084 , -1.61826069],\
+    [-2.46666037,  1.42880439,  0.0641419 , -0.38914158],\
+    [-1.89118635,  2.56309095,  1.37448763, -0.22152977]]
 
+for i in range(0,len(pl_bessel_new)):
+    for j in range(0,len(pl_bessel_new[i])):
+        if pl_bessel_new[i][j] < 0:
+            pl_bessel_new[i][j] += 2*np.pi
 # %%
 import matplotlib.patches as mpatches
 for n in range(0, len(np.arange(1, nterms+1)[0::2])): 
@@ -271,11 +285,11 @@ for i in range(0,len(periods)):
 
     trans_data = trans_all[i]#input your transmission data here
     trans_periods = [periods[i]*j for j in [1,1,1,1]] #input the corresponding periods here (s)
-    phase_data = pl_all[i] #input your phase lag data here
+    phase_data = pl_bessel_new[i] #input your phase lag data here
     phase_periods = [periods[i]*j for j in [1,1,1,1]]#input the corresponding periods here (s)
     r_in = 0.0025 #inner  radius (m)
     r_out = r_in + 7.88e-3 #outer radius (m)
-    no_terms = 100 #number of terms you want to truncate the J0 Bessel Series to
+    no_terms = 50 #number of terms you want to truncate the J0 Bessel Series to
 
     # =============================================================================   
     # BESSEL TRANSMISSION AND BESSEL PHASE LAG FUNCTIONS
@@ -474,13 +488,34 @@ for i in range(0,len(periods)):
     D_tf_all_b_err.append(err)
 # %%
 #For the 4 minute data set:
-plt.errorbar(np.arange(1, nterms+1)[0::2], D_pl_all_b[2], yerr=D_pl_all_b_err[2], fmt='.', capsize=3, label='Bessel '+r'$D_{PL}$')
-plt.errorbar(np.arange(1, nterms+1)[0::2], D_tf_all_b[2], yerr=D_tf_all_b_err[2], fmt='.', capsize=3, label='Bessel '+r'$D_{TF}$')
-plt.errorbar(np.arange(1, nterms+1)[0::2], D_pl_all[2], yerr=D_pl_all_err[2], fmt='.', capsize=3, label='Fourier '+r'$D_{PL}$')
-plt.errorbar(np.arange(1, nterms+1)[0::2], D_tf_all[2], yerr=D_tf_all_err[2], fmt='.', capsize=3, label='Fourier '+r'$D_{TF}$')
-plt.xlabel('n')
+for i in range(0,len(periods)):
+    plt.errorbar(np.arange(1, nterms+1)[0::2], D_pl_all_b[i], yerr=D_pl_all_b_err[i], fmt='.', capsize=3, label='Bessel '+r'$D_{PL}$')
+    plt.errorbar(np.arange(1, nterms+1)[0::2], D_tf_all_b[i], yerr=D_tf_all_b_err[i], fmt='.', capsize=3, label='Bessel '+r'$D_{TF}$')
+    plt.errorbar(np.arange(1, nterms+1)[0::2], D_pl_all[i], yerr=D_pl_all_err[i], fmt='.', capsize=3, label='Fourier '+r'$D_{PL}$')
+    plt.errorbar(np.arange(1, nterms+1)[0::2], D_tf_all[i], yerr=D_tf_all_err[i], fmt='.', capsize=3, label='Fourier '+r'$D_{TF}$')
+    plt.title('Period ' + str(periods[i]) + 's')
+    plt.xlabel('n')
+    plt.ylabel('D ' + r'$(m^{2} s^{-1})$')
+    plt.legend(loc=1)
+    plt.grid()
+    plt.show()
+# %%
+mode = 0
+for i in range(0,len(periods)):
+    if i != 0:
+        plt.errorbar(periods[i], D_pl_all[i][mode], yerr=D_pl_all_err[i][mode], fmt='.', capsize=3, c='green')
+        plt.errorbar(periods[i], D_pl_all_b[i][mode], yerr=D_pl_all_b_err[i][mode], fmt='.', capsize=3, c='blue')
+        plt.errorbar(periods[i], D_tf_all[i][mode], yerr=D_tf_all_err[i][mode], fmt='.', capsize=3, c='red')
+        plt.errorbar(periods[i], D_tf_all_b[i][mode], yerr=D_tf_all_b_err[i][mode], fmt='.', capsize=3, c='black')
+    
+plt.title('Mode 1')
+plt.xlabel('Period')
 plt.ylabel('D ' + r'$(m^{2} s^{-1})$')
-plt.legend()
-plt.grid()
+plt.grid()  
+patch1 = mpatches.Patch(color='green', label=r'$D_{PL}$'+' Fourier')
+patch2 = mpatches.Patch(color='blue', label=r'$D_{PL}$'+' Bessel')
+patch3 = mpatches.Patch(color='red', label=r'$D_{TF}$'+' Fourier')
+patch4 = mpatches.Patch(color='black', label=r'$D_{TF}$'+' Bessel')
+plt.legend(handles=[patch1, patch2, patch3, patch4])
 plt.show()
 # %%

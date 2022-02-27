@@ -33,10 +33,10 @@ Created on Wed Aug 19 18:46:50 2020
 # =============================================================================
 # YOUR DATA:
 # =============================================================================
-trans_data = [0.1475764 , 0.01182216, 0.00550595, 0.00487463]#input your transmission data here
-trans_periods = [240,240,240,240] #input the corresponding periods here (s)
-phase_data = [3.11924273, 0.50867012, 1.2387084 , 1.61826069]#input your phase lag data here
-phase_periods = [240,240,240,240]#input the corresponding periods here (s)
+trans_data = [0.01680325, 0.00837714, 0.01574376, 0.01929003]#input your transmission data here
+trans_periods = [60,60,60,60] #input the corresponding periods here (s)
+phase_data = [0.85964952,  4.93401967, 11.12245106, 17.31006465]#input your phase lag data here
+phase_periods = [60,60,60,60]#input the corresponding periods here (s)
 r_out = 0.01025 #outer radius (m)
 r_in = 0.0025 #inner  radius (m)
 no_terms = 100 #number of terms you want to truncate the J0 Bessel Series to
