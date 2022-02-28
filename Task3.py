@@ -519,3 +519,18 @@ patch4 = mpatches.Patch(color='black', label=r'$D_{TF}$'+' Bessel')
 plt.legend(handles=[patch1, patch2, patch3, patch4])
 plt.show()
 # %%
+import pandas as pd
+data = pd.read_csv("ELEC11-A.CSV", skiprows=1)
+data.columns = ['Time', 'c1']
+data1 = pd.read_csv("ELEC11-B.CSV", skiprows=1)
+data1.columns = ['Time', 'c1']
+time = data['Time']
+c1 = data['c1']
+c2 = data1['c1']
+plt.xlabel('Time (s)')
+plt.ylabel('Voltage (V)')
+plt.plot(time,c1)
+plt.plot(time,c2)
+plt.title('Position: 11')
+plt.show()
+# %%
