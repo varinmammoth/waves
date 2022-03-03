@@ -520,17 +520,52 @@ plt.legend(handles=[patch1, patch2, patch3, patch4])
 plt.show()
 # %%
 import pandas as pd
-data = pd.read_csv("ELEC11-A.CSV", skiprows=1)
+data = pd.read_csv("RES5A.CSV", skiprows=1)
 data.columns = ['Time', 'c1']
-data1 = pd.read_csv("ELEC11-B.CSV", skiprows=1)
+data1 = pd.read_csv("VPHASE1C2.CSV", skiprows=1)
 data1.columns = ['Time', 'c1']
 time = data['Time']
 c1 = data['c1']
 c2 = data1['c1']
 plt.xlabel('Time (s)')
 plt.ylabel('Voltage (V)')
-plt.plot(time,c1)
-plt.plot(time,c2)
-plt.title('Position: 11')
+plt.plot(time,c1, label='C1')
+plt.plot(time,c2, label='C2')
+plt.title('Position: 5, Resistance: 5k Ohm')
+plt.legend()
+plt.grid()
+plt.ylim(-2.6,2.6)
+plt.show()
+# %%
+data1 = pd.read_csv("VPHAS1C2.CSV", skiprows=1)
+data1.columns = ['Time', 'c2']
+time = data1['Time']
+c2 = data1['c2']
+
+plt.plot(time, c2)
+plt.xlabel('Time (s)')
+plt.ylabel('Voltage (V)')
+plt.grid()
+plt.show()
+
+x1 = time[0:30000]
+y1 = c2[0:30000]
+x2 = time[30000:60000]
+y2 = c2[30000:60000]
+
+for i in range(0,len(x1)):
+    if y1[i] > 1:
+        print(i)
+        break
+
+for j in range(30000,60000):
+    if y2[j] > 0.5:
+        print(j)
+        break
+
+plt.plot(x1,y1, c='blue')
+plt.plot(x2,y2, c='red')
+plt.plot(x1[14175],y1[14175],'o')
+plt.plot(x2[32275],y2[32275],'o')
 plt.show()
 # %%
