@@ -569,3 +569,32 @@ plt.plot(x1[14175],y1[14175],'o')
 plt.plot(x2[32275],y2[32275],'o')
 plt.show()
 # %%
+#Pulse distortion
+from scipy.signal import argrelextrema
+from scipy.interpolate import interp1d
+import scipy.optimize as sp
+
+data = pd.read_csv("RING11C2.CSV", skiprows=1)
+data.columns = ['Time', 'c2']
+time = data['Time']
+c2 = data['c2']
+
+func = interp1d(np.array(time), np.array(c2))
+peakmax = sp.fmin(lambda x: -func(x), 0.00008)
+peakmin = sp.fmin(func, 0.0001)
+ph = 0.5*(func(peakmax)[0] + func(peakmin)[0])
+
+plt.xlabel('Time (s)')
+plt.ylabel('Voltage (V)')
+plt.plot(time,c2)
+plt.plot(time, ph*np.ones(len(time)), '--', label='PH')
+
+plt.plot(peakmax, func(peakmax), 'o', c='red')
+plt.plot(peakmin, func(peakmin), 'o', c='red')
+plt.xlim(0.00006, 0.00016)
+plt.ylim(2,2.5)
+plt.grid()
+plt.legend()
+plt.show()
+
+# %%
