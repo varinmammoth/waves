@@ -588,13 +588,162 @@ plt.xlabel('Time (s)')
 plt.ylabel('Voltage (V)')
 plt.plot(time,c2)
 plt.plot(time, ph*np.ones(len(time)), '--', label='PH')
+plt.plot(time, 0.9*ph*np.ones(len(time)), '--', label='0.9 PH')
+plt.plot(time, 0.1*ph*np.ones(len(time)), '--', label='0.9 PH')
 
 plt.plot(peakmax, func(peakmax), 'o', c='red')
 plt.plot(peakmin, func(peakmin), 'o', c='red')
 plt.xlim(0.00006, 0.00016)
-plt.ylim(2,2.5)
+# plt.ylim(2,2.5)
 plt.grid()
 plt.legend()
+
+t1 = 0.000076
+t2 = 0.000088
+t3 = 0.000126
+t4 = 0.000137
+t5 = 0.000089
+t6 = 0.0000948152
+plt.plot(t1, func(t1), 'o')
+plt.plot(t2, func(t2), 'o')
+plt.plot(t3, func(t3), 'o')
+plt.plot(t4, func(t4), 'o')
+plt.plot(t5, func(t5), 'o')
+plt.plot(t6, func(t6), 'o')
+
+plt.show()
+
+# %%
+#Pulse distortion
+from scipy.signal import argrelextrema
+from scipy.interpolate import interp1d
+import scipy.optimize as sp
+from scipy.misc import derivative
+
+data = pd.read_csv("RING7C2.CSV", skiprows=1)
+data.columns = ['Time', 'c2']
+time = data['Time']
+c2 = data['c2']
+
+func = interp1d(np.array(time), np.array(c2))
+peakmax = sp.fmin(lambda x: -func(x), 0.00005)
+peakmin = sp.fmin(func, 0.00006)
+ph = 0.5*(func(peakmax)[0] + func(peakmin)[0])
+
+plt.xlabel('Time (s)')
+plt.ylabel('Voltage (V)')
+plt.plot(time,c2)
+plt.plot(time, ph*np.ones(len(time)), '--', label='PH')
+plt.plot(time, 0.9*ph*np.ones(len(time)), '--', label='0.9 PH')
+plt.plot(time, 0.1*ph*np.ones(len(time)), '--', label='0.9 PH')
+
+plt.plot(peakmax, func(peakmax), 'o', c='red')
+plt.plot(peakmin, func(peakmin), 'o', c='red')
+plt.xlim(0.00003, 0.00012)
+# plt.ylim(2,2.5)
+plt.grid()
+plt.legend()
+
+t1 = 4.35528e-05
+t2 = 5.2932e-05
+t3 = 9.4236e-05
+t4 = 0.0001025328
+peak_peak_time = (peakmin - peakmax)*2
+plt.plot(t1, func(t1), 'o')
+plt.plot(t2, func(t2), 'o')
+plt.plot(t3, func(t3), 'o')
+plt.plot(t4, func(t4), 'o')
+plt.show()
+
+
+idx = np.argwhere(np.diff(np.sign(func(time) - ph*np.ones(len(time))))).flatten()
+
+# %%
+#dispersion relation
+from scipy.interpolate import UnivariateSpline
+data = pd.read_csv('electrical_dispersion.csv')
+
+def dispersion_theory(k, L, C):
+    return k/np.sqrt(L*C)
+
+f = data['Frequency (Hz)']
+omega = data['omega']
+k = data['k']
+
+err_omega = 2*np.pi*50*np.ones(len(omega))
+
+omega_theory = dispersion_theory(k, 330e-6, 15e-9)
+dispersion_interp = UnivariateSpline(k, omega)
+
+plt.errorbar(k, omega, yerr=err_omega, fmt='.', capsize=2, label='Data')
+plt.plot(k, omega_theory, '--', label='Theory')
+plt.plot(k, dispersion_interp(k))
+plt.xlabel('k ' + r'$(m^{-1})$')
+plt.ylabel('ω ' + r'$(s^{-1})$')
+plt.legend()
+plt.grid()
+plt.show()
+
+vgroup_func = dispersion_interp.derivative()
+vgroup_err = np.ones(len(k))*2*np.pi*50/0.0785
+vphase = np.divide(omega, k)
+vphase_err = 2*np.pi*50
+
+plt.errorbar(omega, vgroup_func(k), fmt='.', yerr=vgroup_err, capsize=2, label=r'$v_{group}$')
+plt.errorbar(omega[1:], vphase[1:], fmt='.', yerr=vphase_err, capsize=2, label=r'$v_{phase}$')
+plt.plot(omega, dispersion_theory(np.ones(len(k)),330e-6, 15e-9), '--', label='Theory')
+plt.legend()
+plt.grid()
+plt.xlabel('ω ' + r'$(s^{-1})$')
+plt.ylabel('v ' + r'$(ms^{-1})$')
+plt.show()
+
+v_in = data['V_in rms (mV)']*1e-3
+v_in_err = data['Std V_in rms (microV)']*1e-6
+v_out = data['V_out rms (mV)']*1e-3
+v_out_err = data['Std V_out rms (microV)']*1e-6
+
+def ratio_err(v_in, v_out, v_in_err, v_out_err):
+    a = v_out*v_in_err/(v_in**2)
+    b = v_out_err/v_in
+    return np.sqrt(a**2 + b**2)
+
+ratio = v_out/v_in
+err_ratio = ratio_err(v_in, v_out, v_in_err, v_out_err)
+fit, cov = np.polyfit(omega, ratio, w=1/err_ratio, deg=1, cov=True)
+line = np.poly1d(fit)
+
+plt.errorbar(omega, ratio, yerr=err_ratio, fmt='.', capsize=2, label='Data')
+plt.plot(omega, line(omega), '-', label='Fit')
+plt.xlabel('ω ' + r'$(s^{-1})$')
+plt.ylabel(r'$(V_{out}/V_{in})$')
+plt.legend()
+plt.grid()
+plt.show()
+# %%
+#Lissajous
+
+def sine_wave(t, x, f):
+    w = 2*np.pi*f
+    interp_fn2 = lambda x: dispersion_interp(x)-w
+    k = sp.newton(interp_fn2, 1)
+    y = np.sin(k*x-w*t)
+    print(f,w,k)
+    return y
+
+f = np.linspace(70,6473,5)
+t = np.linspace(0,0.015,1000)
+color = ['red', 'green', 'blue', 'black', 'purple']
+plt.figure(figsize=(6, 6), dpi=80)
+for i in range(0,len(f)):
+    v0 = sine_wave(t, 0, f[i])
+    vL = sine_wave(t, 40, f[i])
+    plt.plot(v0, vL, c=color[i], label=str(f[i]))
+
+plt.grid()
+plt.xlabel(r'$\frac{V(0,t)}{V_{0}}$')
+plt.ylabel(r'$\frac{V(L,t)}{V_{0}}$')
+plt.legend(title='Frequency (Hz)', loc='center left', bbox_to_anchor=(1, 0.5))  
 plt.show()
 
 # %%
