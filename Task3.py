@@ -689,13 +689,13 @@ vgroup_err = np.ones(len(k))*2*np.pi*50/0.0785
 vphase = np.divide(omega, k)
 vphase_err = 2*np.pi*50
 
-plt.errorbar(omega, vgroup_func(k), fmt='.', yerr=vgroup_err, capsize=2, label=r'$v_{group}$')
-plt.errorbar(omega[1:], vphase[1:], fmt='.', yerr=vphase_err, capsize=2, label=r'$v_{phase}$')
-plt.plot(omega, dispersion_theory(np.ones(len(k)),330e-6, 15e-9), '--', label='Theory')
+plt.errorbar(k, vgroup_func(k), fmt='.', yerr=vgroup_err, capsize=2, label=r'$v_{group}$')
+plt.errorbar(k[1:], vphase[1:], fmt='.', yerr=vphase_err, capsize=2, label=r'$v_{phase}$')
+plt.plot(k, dispersion_theory(np.ones(len(k)),330e-6, 15e-9), '--', label='Theory')
 plt.legend()
 plt.grid()
-plt.xlabel('ω ' + r'$(s^{-1})$')
-plt.ylabel('v ' + r'$(ms^{-1})$')
+plt.xlabel('k ' + r'$(m^{-1})$')
+plt.ylabel('v ' + r'$(sections\ s^{-1})$')
 plt.show()
 
 v_in = data['V_in rms (mV)']*1e-3
@@ -728,7 +728,7 @@ def sine_wave(t, x, f):
     interp_fn2 = lambda x: dispersion_interp(x)-w
     k = sp.newton(interp_fn2, 1)
     y = np.sin(k*x-w*t)
-    print(f,w,k)
+    # print(f,w,k)
     return y
 
 f = np.linspace(70,6473,5)
@@ -746,4 +746,39 @@ plt.ylabel(r'$\frac{V(L,t)}{V_{0}}$')
 plt.legend(title='Frequency (Hz)', loc='center left', bbox_to_anchor=(1, 0.5))  
 plt.show()
 
+# %%
+#Square pulse distortion simulation
+
+#hard coding the numbers because i'm lazy
+V0 = 1
+T = 100e-6
+beta_n = (1/np.pi)*np.array([2, 2/3, 2/5, 2/7, 2/9, 2/11, 2/13, 2/15])
+omega_n = (2*np.pi/T)*np.array([1,3,5,7,9,11,13,15])
+R_n = line(omega_n)
+def get_k_n(omega_n):
+    klist = []
+    for w in omega_n:
+        interp_fn2 = lambda x: dispersion_interp(x)-w
+        k = sp.newton(interp_fn2, 1)
+        klist.append(k)
+    return klist
+k_n = get_k_n(omega_n)
+
+def distorted_square_terms(t,x,beta_n,omega_n, k_n, R_n):
+    terms = []
+    for i in range (0,len(omega_n)):
+        term = V0*R_n[i]*beta_n[i]*np.sin(k_n[i]*x - omega_n[i]*t)
+        terms.append(term)
+    return terms
+
+t = np.linspace(0,0.1,1000)
+L = [40]
+for l in L:
+    terms = distorted_square_terms(t, l, beta_n,omega_n,k_n,R_n)
+    distorted_pulse = np.array([sum(i) for i in zip(*terms)]) + np.ones(len(t))*V0/2
+    plt.plot(t, distorted_pulse)
+plt.xlabel('Time (s)')
+plt.ylabel(r'$\frac{V(x_{m},t)}{V_{0}}$')
+plt.grid()
+plt.show()
 # %%
