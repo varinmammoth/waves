@@ -782,3 +782,56 @@ plt.ylabel(r'$\frac{V(x_{m},t)}{V_{0}}$')
 plt.grid()
 plt.show()
 # %%
+#other signal shapes
+data1 = pd.read_csv("TRIAN1.CSV", skiprows=1)
+data1.columns = ['Time', 'c1']
+data2 = pd.read_csv("TRIAN2.CSV", skiprows=1)
+data2.columns = ['Time', 'c2']
+time = data1['Time']
+c1 = data1['c1']
+c2 = data2['c2']
+
+plt.ylabel('Amplitude (V)')
+plt.subplot(3,1,1)
+data1 = pd.read_csv("TRIAN1.CSV", skiprows=1)
+data1.columns = ['Time', 'c1']
+data2 = pd.read_csv("TRIAN2.CSV", skiprows=1)
+data2.columns = ['Time', 'c2']
+time = data1['Time']
+c1 = data1['c1']
+c2 = data2['c2']
+plt.plot(time, c1, label='Original')
+plt.plot(time, c2, label='Propagated')
+plt.xlim(0.1550,0.1552)
+plt.xticks([])
+plt.grid()
+plt.legend()
+plt.subplot(3,1,2)
+data1 = pd.read_csv("EXPO1.CSV", skiprows=1)
+data1.columns = ['Time', 'c1']
+data2 = pd.read_csv("EXPO2.CSV", skiprows=1)
+data2.columns = ['Time', 'c2']
+time = data1['Time']
+c1 = data1['c1']
+c2 = data2['c2']
+plt.plot(time, c1, label='Original')
+plt.plot(time, c2, label='Propagated')
+plt.xlim(0.1550,0.1552)
+plt.xticks([])
+plt.grid()
+plt.subplot(3,1,3)
+data1 = pd.read_csv("SINC1.CSV", skiprows=1)
+data1.columns = ['Time', 'c1']
+data2 = pd.read_csv("SINC2.CSV", skiprows=1)
+data2.columns = ['Time', 'c2']
+time = data1['Time']
+c1 = data1['c1']
+c2 = data2['c2']
+plt.plot(time, c1, label='Original')
+plt.plot(time, c2, label='Propagated')
+plt.xlim(0.155185,0.15522)
+plt.xticks(np.linspace(0.155185,0.15522, 5))
+plt.grid()
+plt.xlabel('Time (s)')
+plt.show()
+# %%
