@@ -637,22 +637,23 @@ plt.plot(time, ph*np.ones(len(time)), '--', label='PH')
 plt.plot(time, 0.9*ph*np.ones(len(time)), '--', label='0.9 PH')
 plt.plot(time, 0.1*ph*np.ones(len(time)), '--', label='0.9 PH')
 
-plt.plot(peakmax, func(peakmax), 'o', c='red')
-plt.plot(peakmin, func(peakmin), 'o', c='red')
+# plt.plot(peakmax, func(peakmax), 'o', c='red')
+# plt.plot(peakmin, func(peakmin), 'o', c='red')
 plt.xlim(0.00003, 0.00012)
+plt.xticks(np.linspace(0.00003, 0.00012,5))
 # plt.ylim(2,2.5)
 plt.grid()
-plt.legend()
+plt.legend(loc=1)
 
 t1 = 4.35528e-05
 t2 = 5.2932e-05
 t3 = 9.4236e-05
 t4 = 0.0001025328
 peak_peak_time = (peakmin - peakmax)*2
-plt.plot(t1, func(t1), 'o')
-plt.plot(t2, func(t2), 'o')
-plt.plot(t3, func(t3), 'o')
-plt.plot(t4, func(t4), 'o')
+# plt.plot(t1, func(t1), 'o')
+# plt.plot(t2, func(t2), 'o')
+# plt.plot(t3, func(t3), 'o')
+# plt.plot(t4, func(t4), 'o')
 plt.show()
 
 
@@ -664,6 +665,9 @@ from scipy.interpolate import UnivariateSpline
 data = pd.read_csv('electrical_dispersion.csv')
 
 def dispersion_theory(k, L, C):
+    return 2*np.sin(k/2)/np.sqrt(L*C)
+
+def dispersion_theory_low(k, L, C):
     return k/np.sqrt(L*C)
 
 f = data['Frequency (Hz)']
@@ -673,12 +677,31 @@ k = data['k']
 err_omega = 2*np.pi*50*np.ones(len(omega))
 
 omega_theory = dispersion_theory(k, 330e-6, 15e-9)
+omega_theory_min = dispersion_theory(k, 396e-6, 16.5e-9)
+omega_theory_max = dispersion_theory(k, 264e-6, 13.5e-9)
+omega_theory_low = dispersion_theory_low(k, 330e-6, 15e-9)
+omega_theory_min_low = dispersion_theory_low(k, 396e-6, 16.5e-9)
+omega_theory_max_low = dispersion_theory_low(k, 264e-6, 13.5e-9)
 dispersion_interp = UnivariateSpline(k, omega)
+k_of_w = UnivariateSpline(omega, k)
 
+plt.figure(figsize=(7, 8), dpi=80)
+plt.subplot(2,1,1)
+plt.errorbar(k, omega, yerr=err_omega, fmt='.', capsize=2, label='Data')
+plt.plot(k, omega_theory_low, '--', label='Small k approximation')
+plt.plot(k, omega_theory_min_low, '-', c='gainsboro')
+plt.plot(k, omega_theory_max_low, '-', c='gainsboro')
+plt.xlabel('k ' + r'$(sections\ ^{-1})$')
+plt.ylabel('ω ' + r'$(s^{-1})$')
+plt.legend()
+plt.grid()
+plt.subplot(2,1,2)
 plt.errorbar(k, omega, yerr=err_omega, fmt='.', capsize=2, label='Data')
 plt.plot(k, omega_theory, '--', label='Theory')
-plt.plot(k, dispersion_interp(k))
-plt.xlabel('k ' + r'$(m^{-1})$')
+plt.plot(k, omega_theory_min, '-', c='gainsboro')
+plt.plot(k, omega_theory_max, '-', c='gainsboro')
+# plt.plot(k, dispersion_interp(k))
+plt.xlabel('k ' + r'$(sections\ ^{-1})$')
 plt.ylabel('ω ' + r'$(s^{-1})$')
 plt.legend()
 plt.grid()
@@ -689,12 +712,32 @@ vgroup_err = np.ones(len(k))*2*np.pi*50/0.0785
 vphase = np.divide(omega, k)
 vphase_err = 2*np.pi*50
 
-plt.errorbar(k, vgroup_func(k), fmt='.', yerr=vgroup_err, capsize=2, label=r'$v_{group}$')
-plt.errorbar(k[1:], vphase[1:], fmt='.', yerr=vphase_err, capsize=2, label=r'$v_{phase}$')
-plt.plot(k, dispersion_theory(np.ones(len(k)),330e-6, 15e-9), '--', label='Theory')
+def vphase_new(k, L=330e-6, C=15e-9):
+    w = (2/np.sqrt(L*C))*np.sin(k/2)
+    return np.divide(w, k)
+
+def vgroup_new(k, L=330e-6, C=15e-9):
+    return (1/np.sqrt(L*C))*np.cos(k/2)
+
+plt.figure(figsize=(6, 6), dpi=80)
+plt.subplot(2,1,1)
+plt.errorbar(dispersion_interp(k), vgroup_func(k), fmt='.', yerr=vgroup_err, capsize=2, label=r'$v_{group}$')
+plt.errorbar(dispersion_interp(k)[1:], vphase[1:], fmt='.', yerr=vphase_err, capsize=2, label=r'$v_{phase}$')
+plt.plot(dispersion_interp(k), dispersion_theory(np.ones(len(k)),330e-6, 15e-9), '--', label='Theory')
+plt.plot(dispersion_interp(k), dispersion_theory(np.ones(len(k)),396e-6, 16.5e-9), '-', c='grey')
+plt.plot(dispersion_interp(k), dispersion_theory(np.ones(len(k)),264e-6, 13.5e-9), '-', c='grey')
 plt.legend()
 plt.grid()
-plt.xlabel('k ' + r'$(m^{-1})$')
+plt.xlabel('ω ' + r'$(s^{-1})$')
+plt.ylabel('v ' + r'$(sections\ s^{-1})$')
+plt.subplot(2,1,2)
+plt.errorbar(dispersion_interp(k), vgroup_func(k), fmt='.', yerr=vgroup_err, capsize=2, label=r'$v_{group}$')
+plt.errorbar(dispersion_interp(k)[1:], vphase[1:], fmt='.', yerr=vphase_err, capsize=2, label=r'$v_{phase}$')
+plt.plot(dispersion_interp(k), vphase_new(k,264e-6, 13.5e-9), '--', label=r'$v_{phase}$ Theory')
+plt.plot(dispersion_interp(k), vgroup_new(k,264e-6, 13.5e-9), '--', label=r'$v_{group}$ Theory')
+plt.legend()
+plt.grid()
+plt.xlabel('ω ' + r'$(s^{-1})$')
 plt.ylabel('v ' + r'$(sections\ s^{-1})$')
 plt.show()
 
